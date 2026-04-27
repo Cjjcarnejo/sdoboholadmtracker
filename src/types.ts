@@ -1,54 +1,40 @@
-export enum ADMType {
-  HOME_SCHOOLING = "Home Schooling",
-  OHSP = "OHSP",
-  MODULAR_PRINT = "Modular-Print",
-  MODULAR_DIGITAL = "Modular-Digital",
-  RADIO_BASED = "Radio-Based",
-  TV_BASED = "TV-Based"
-}
+export type Gender = 'Male' | 'Female';
+export type Grade = 'Grade 7' | 'Grade 8' | 'Grade 9' | 'Grade 10' | 'Grade 11' | 'Grade 12';
+export type ReasonForADM = 'Distance' | 'Work' | 'Health' | 'Family Problems' | 'Others';
+export type AcademicStatus = '(90-100) Outstanding' | '(85-89) Very Satisfactory' | '(80-84) Satisfactory' | '(75-79) Fairly Satisfactory' | '(Below 75) Did not meet expectations';
+export type Assessment = 'Pending' | 'Continue ADM' | 'Back to Regular Class';
 
-export enum StudentStatus {
-  ACTIVE = "Active",
-  DROPPED = "Dropped",
-  TRANSFERRED = "Transferred",
-  GRADUATED = "Graduated"
-}
-
-export enum UserRole {
-  ADMIN = "Admin",
-  SCHOOL_COORDINATOR = "School-Coordinator",
-  DISTRICT_COORDINATOR = "District-Coordinator"
-}
-
-export interface Student {
-  id?: string;
-  lrn: string;
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  gradeLevel: string;
-  section: string;
-  admType: ADMType;
-  status: StudentStatus;
-  schoolId: string;
-  enrolledAt: string;
-  updatedAt: string;
-  remarks?: string;
-}
-
-export interface School {
+export interface StudentRecord {
   id: string;
-  name: string;
   district: string;
-  contactEmail?: string;
+  school: string;
+  studentName: string;
+  lastName: string;
+  firstName: string;
+  middleInitial?: string;
+  suffix?: string;
+  gender: Gender;
+  grade: Grade;
+  reasonForADM: ReasonForADM;
+  academicStatus: AcademicStatus;
+  assessment: Assessment;
+  duration: string;
+  startDate: string;
+  endDate: string;
+  createdAt: number;
+  createdBy: string;
+  updatedAt?: any;
 }
 
-export interface AppUser {
+export interface UserProfile {
   uid: string;
+  fullName: string;
   email: string;
-  role: UserRole;
-  schoolId?: string;
-  district?: string;
+  district: string;
+  school: string;
+  role: 'admin' | 'user';
+  createdAt: number;
+  congressionalDistrict?: string;
 }
 
 export enum OperationType {

@@ -1,33 +1,32 @@
-# Security Specification - SDO Bohol ADM Tracker
+# Security Specification: ADM Tracker
 
 ## 1. Data Invariants
-- A student record must be associated with a valid school ID.
-- Only authenticated users with appropriate roles (Admin, School-Coordinator, District-Coordinator) can create or update records.
-- School Coordinators can only manage students in their own school.
-- District Coordinators can read all students in their district.
-- Admins have full access.
-- LRN must be a 12-digit numeric string.
+- A `StudentRecord` must have a valid `studentName`, `grade`, `school`, and `district`.
+- A `StudentRecord` can only be created by an authenticated user.
+- A `StudentRecord`'s `createdBy` field must match the `request.auth.uid`.
+- A `User` profile can only be created/updated by the owner or an admin.
+- Users can only read student records if they are an admin or if they created the record.
+- Admins have full access to all records.
 
-## 2. The Dirty Dozen Payloads (Targeting Rejection)
+## 2. The "Dirty Dozen" Payloads (Denial Tests)
 
-1. **Identity Spoofing**: Attempt to create a student record with `schoolId` of another school.
-2. **LRN Poisoning**: Attempt to set LRN to a 1MB string.
-3. **Privilege Escalation**: Attempt to update own user record to `role: 'Admin'`.
-4. **Orphaned Student**: Create student with non-existent `schoolId`.
-5. **State Skipping**: Manually setting `status` to 'Graduated' without required years of data.
-6. **Mass Cleanup**: Authenticated user trying to `delete` all students in a collection.
-7. **Cross-School Write**: School-Coordinator of School A trying to update student in School B.
-8. **Field Injection**: Adding `isVerified: true` to a student document.
-9. **Timestamp Manipulation**: Providing a custom `updatedAt` from the future.
-10. **Query Scrape**: Anonymous user trying to `list` all students.
-11. **PII Leak**: Non-admin user trying to `get` the full private user profile of an admin.
-12. **ID Collision Attack**: Trying to use `/../` in a document ID.
+### Student Records
+1. **Identity Spoofing**: `create` student record with `createdBy` set to another user's UID.
+2. **Shadow Field Injection**: `create` student record with extra field `isVerified: true`.
+3. **Invalid ID**: `get` record with ID `../../secrets/config`.
+4. **Unauthenticated Read**: `list` students without logging in.
+5. **Unauthorized Update**: Non-owner/non-admin attempting to change a student's `studentName`.
+6. **Immutable Field Change**: Owner attempting to change `createdAt` or `createdBy` on an existing record.
+7. **Resource Poisoning**: Injecting a 1MB string into the `studentName` field.
+8. **Invalid Enum**: Setting `gender` to "Robot".
+9. **PII Breach**: Non-admin user querying `/users` collection for another user's email.
+10. **State/Assessment Bypass**: Regular user changing a pending assessment directly to "Complete" without being the owner or having admin rights (if that logic was restricted).
+11. **Timestamp Spoofing**: Sending a client-side timestamp for `updatedAt` instead of `serverTimestamp()`.
+12. **Orphaned Record**: Creating a student record with a `district` that doesn't match the user's assigned district (integrity constraint).
 
-## 3. Test Runner (Draft)
-
-```typescript
-// firestore.rules.test.ts (logical representation)
-// - should deny create if schoolId does not match user's schoolId (unless Admin)
-// - should deny update if affectedKeys().has('role') and !isAdmin()
-// - should deny read if !isSignedIn()
-```
+## 3. Test Runner (Draft Logic)
+The `firestore.rules.test.ts` will verify that:
+- `auth != null` is required for all writes.
+- `isValidStudentRecord(incoming())` is called on all writes to `/students`.
+- `incoming().diff(existing()).affectedKeys().hasOnly([...])` is used for updates.
+- `resource.data.createdBy == request.auth.uid || isAdmin()` for reads.

@@ -1,18 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 0. Global Safety Net
+    // 0. Default Deny
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Phase 3: Primitives
+    // --- Helpers ---
     function isSignedIn() {
-      return request.auth != null && request.auth.token.email_verified == true;
+      return request.auth != null;
     }
 
-    function isUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isSystemAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'carmonaloren042@gmail.com' && 
+        request.auth.token.email_verified == true
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
     function incoming() {
@@ -23,95 +30,64 @@ service cloud.firestore {
       return resource.data;
     }
 
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    // --- Entity Validations ---
+
+    function isValidStudentRecord(data) {
+      return data.keys().hasAll(['studentName', 'lastName', 'firstName', 'district', 'school', 'gender', 'grade', 'reasonForADM', 'academicStatus', 'duration', 'startDate', 'endDate', 'createdAt', 'createdBy'])
+        && data.studentName is string && data.studentName.size() <= 200
+        && data.lastName is string && data.lastName.size() <= 100
+        && data.firstName is string && data.firstName.size() <= 100
+        && data.district is string && data.district.size() <= 100
+        && data.school is string && data.school.size() <= 200
+        && data.gender in ['Male', 'Female']
+        && data.grade in ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
+        && data.reasonForADM in ['Distance', 'Work', 'Health', 'Family Problems', 'Others']
+        && data.academicStatus in ['(90-100) Outstanding', '(85-89) Very Satisfactory', '(80-84) Satisfactory', '(75-79) Fairly Satisfactory', '(Below 75) Did not meet expectations']
+        && data.assessment in ['Pending', 'Continue ADM', 'Back to Regular Class']
+        && data.duration is string
+        && data.startDate is string
+        && data.endDate is string
+        && data.createdAt is number
+        && data.createdBy == request.auth.uid;
     }
 
-    function isAdmin() {
-      // Bootstrapped Admin: cjjcarnejo@gmail.com
-      return isSignedIn() && (
-        request.auth.token.email == 'cjjcarnejo@gmail.com' ||
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-      );
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'fullName', 'email', 'district', 'role', 'createdAt'])
+        && data.uid == request.auth.uid
+        && data.fullName is string && data.fullName.size() <= 200
+        && data.email == request.auth.token.email
+        && data.district is string
+        && data.role in ['admin', 'user']
+        && data.createdAt is number;
     }
 
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
+    // --- Collections ---
 
-    function isSchoolCoordinator(schoolId) {
-      let userData = getUserData();
-      return isSignedIn() && userData.role == 'School-Coordinator' && userData.schoolId == schoolId;
-    }
-
-    function isDistrictCoordinator(district) {
-      let userData = getUserData();
-      return isSignedIn() && userData.role == 'District-Coordinator' && userData.district == district;
-    }
-
-    // Pillar 2: Validation Blueprints
-    function isValidStudent(data) {
-      return data.lrn is string && data.lrn.size() == 12 && data.lrn.matches('^[0-9]+$') &&
-             data.firstName is string && data.firstName.size() >= 1 && data.firstName.size() <= 100 &&
-             data.lastName is string && data.lastName.size() >= 1 && data.lastName.size() <= 100 &&
-             data.gradeLevel in ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'] &&
-             data.admType in ['Home Schooling', 'OHSP', 'Modular-Print', 'Modular-Digital', 'Radio-Based', 'TV-Based'] &&
-             data.status in ['Active', 'Dropped', 'Transferred', 'Graduated'] &&
-             isValidId(data.schoolId);
-    }
-
-    // 1. Schools
-    match /schools/{schoolId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
-    // 2. Students
-    match /students/{studentId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn() && (
-        isAdmin() ||
-        resource.data.schoolId == getUserData().schoolId ||
-        get(/databases/$(database)/documents/schools/$(resource.data.schoolId)).data.district == getUserData().district
-      );
-
-      allow create: if isSignedIn() && isValidStudent(incoming()) && (
-        isAdmin() ||
-        isSchoolCoordinator(incoming().schoolId)
-      ) && exists(/databases/$(database)/documents/schools/$(incoming().schoolId));
-
-      allow update: if (
-        isSignedIn() && isValidStudent(incoming()) && (
-          isAdmin() ||
-          (isSchoolCoordinator(existing().schoolId) && incoming().schoolId == existing().schoolId)
-        ) && (
-          // Allow specific actions or fields
-          incoming().diff(existing()).affectedKeys().hasOnly(['lrn', 'firstName', 'lastName', 'middleName', 'gradeLevel', 'section', 'admType', 'status', 'remarks', 'updatedAt'])
-        )
-      );
-
-      allow delete: if isAdmin();
-    }
-
-    // 3. Users
     match /users/{userId} {
-      allow read: if isUser(userId) || isAdmin();
-      allow create: if isSignedIn() && isUser(userId) && 
-                      incoming().role == 'School-Coordinator' && // Default role on self-signup? Or maybe admin only sets roles.
-                      incoming().keys().hasAll(['uid', 'email', 'role']) &&
-                      incoming().uid == request.auth.uid;
+      allow get: if isSignedIn() && (request.auth.uid == userId || isSystemAdmin());
+      allow list: if isSystemAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUserProfile(incoming());
+      allow update: if isSignedIn() && (request.auth.uid == userId || isSystemAdmin())
+                    && isValidUserProfile(incoming())
+                    && (isSystemAdmin() || incoming().role == existing().role); // Users can't change their own role
+      allow delete: if isSystemAdmin();
+    }
+
+    match /students/{studentId} {
+      allow list: if isSignedIn() && (isSystemAdmin() || resource.data.createdBy == request.auth.uid);
+      allow get: if isSignedIn() && isValidId(studentId) && (isSystemAdmin() || resource.data.createdBy == request.auth.uid);
       
-      allow update: if isAdmin() || (
-        isUser(userId) && 
-        incoming().diff(existing()).affectedKeys().hasOnly(['schoolId', 'district']) && // Users can't change their own role
-        incoming().role == existing().role
-      );
+      allow create: if isSignedIn() && isValidId(studentId) && isValidStudentRecord(incoming());
+      
+      allow update: if isSignedIn() && isValidId(studentId) 
+                    && (isSystemAdmin() || (existing().createdBy == request.auth.uid && incoming().createdBy == existing().createdBy))
+                    && isValidStudentRecord(incoming());
+      
+      allow delete: if isSignedIn() && isValidId(studentId) && (isSystemAdmin() || resource.data.createdBy == request.auth.uid);
     }
     
-    // 4. Admins
-    match /admins/{adminId} {
-      allow read: if isSignedIn();
-      allow write: if false; // Only manageable via console or specialized tool
+    match /test/connection {
+      allow get: if true;
     }
   }
 }

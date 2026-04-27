@@ -1,0 +1,142 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (auth.uid)
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - firstName: string (required)
+    //   - surname: string (required)
+    //   - district: string (required)
+    //   - municipality: string (required)
+    //
+    // Collection: books
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required, 1-200 chars)
+    //   - type: string (required)
+    //   - gradeLevel: string (required)
+    //   - grade: string (optional)
+    //   - subject: list of strings (required)
+    //   - author: string (required)
+    //   - isbn: string (optional)
+    //   - publisher: string (optional)
+    //   - copyrightYear: string (optional)
+    //   - volume: string (optional)
+    //   - schoolName: string (required)
+    //   - district: string (required)
+    //   - municipality: string (optional)
+    //   - dateAcquired: string (required, ISO 8601 format)
+    //   - usable: number (required, >= 0)
+    //   - partiallyDamaged: number (required, >= 0)
+    //   - damaged: number (required, >= 0)
+    //   - lost: number (required, >= 0)
+    //   - condemnable: number (required, >= 0)
+    //   - total: number (required, >= 0)
+    //   - acquisitionMode: string (optional)
+    //   - utilizationMode: string (optional)
+    //   - impactOnLearners: string (optional)
+    //   - remarks: string (optional)
+    //   - userId: string (required, matches creator)
+    //   - addedBy: string (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "carmonaloren042@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}.*");
+    }
+
+    function hasRequiredFields(data, fields) {
+      return data.keys().hasAll(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasRequiredFields(data, ['uid', 'email', 'firstName', 'surname', 'district', 'municipality']) &&
+             data.uid == request.auth.uid &&
+             isValidEmail(data.email) &&
+             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 100 &&
+             data.surname is string && data.surname.size() > 0 && data.surname.size() < 100 &&
+             data.district is string &&
+             data.municipality is string;
+    }
+
+    function isValidBook(data) {
+      return hasRequiredFields(data, ['title', 'type', 'gradeLevel', 'subject', 'author', 'schoolName', 'district', 'dateAcquired', 'usable', 'partiallyDamaged', 'damaged', 'lost', 'condemnable', 'total', 'userId']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.type is string && data.type.size() < 50 &&
+             data.gradeLevel is string && data.gradeLevel.size() < 50 &&
+             data.subject is string && data.subject.size() < 100 &&
+             data.author is string && data.author.size() < 200 &&
+             data.schoolName is string && data.schoolName.size() < 200 &&
+             data.district is string && data.district.size() < 100 &&
+             isValidDateString(data.dateAcquired) &&
+             data.usable is number && data.usable >= 0 &&
+             data.partiallyDamaged is number && data.partiallyDamaged >= 0 &&
+             data.damaged is number && data.damaged >= 0 &&
+             data.lost is number && data.lost >= 0 &&
+             data.condemnable is number && data.condemnable >= 0 &&
+             data.total is number && data.total >= 0 &&
+             data.userId is string &&
+             (!('grade' in data) || (data.grade is string && data.grade.size() < 50)) &&
+             (!('isbn' in data) || (data.isbn is string && data.isbn.size() < 50)) &&
+             (!('publisher' in data) || (data.publisher is string && data.publisher.size() < 200)) &&
+             (!('copyrightYear' in data) || (data.copyrightYear is string && data.copyrightYear.size() < 20)) &&
+             (!('volume' in data) || (data.volume is string && data.volume.size() < 50)) &&
+             (!('municipality' in data) || (data.municipality is string && data.municipality.size() < 100)) &&
+             (!('acquisitionMode' in data) || (data.acquisitionMode is string && data.acquisitionMode.size() < 100)) &&
+             (!('utilizationMode' in data) || (data.utilizationMode is string && data.utilizationMode.size() < 100)) &&
+             (!('impactOnLearners' in data) || (data.impactOnLearners is string && data.impactOnLearners.size() < 300)) &&
+             (!('remarks' in data) || (data.remarks is string && data.remarks.size() < 1000)) &&
+             (!('addedBy' in data) || (data.addedBy is string && data.addedBy.size() < 100));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && isOwner(userId);
+      allow update: if isAuthenticated() && ((isValidUser(request.resource.data) && isOwner(userId)) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /books/{bookId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidBook(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && ((isValidBook(request.resource.data) && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid) || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+  }
+}

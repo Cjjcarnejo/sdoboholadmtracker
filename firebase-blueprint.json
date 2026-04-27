@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "firstName": { "type": "string" },
+        "surname": { "type": "string" },
+        "district": { "type": "string" },
+        "municipality": { "type": "string" }
+      },
+      "required": ["uid", "email", "firstName", "surname", "district", "municipality"]
+    },
+    "Book": {
+      "title": "Book",
+      "description": "A learning resource book",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Book title" },
+        "type": { "type": "string", "description": "Type of the book" },
+        "gradeLevel": { "type": "string", "description": "Grade level" },
+        "grade": { "type": "string", "description": "Specific grade" },
+        "subject": { "type": "string", "description": "Subject area" },
+        "author": { "type": "string", "description": "Author/s" },
+        "isbn": { "type": "string", "description": "ISBN Number" },
+        "publisher": { "type": "string", "description": "Publisher" },
+        "copyrightYear": { "type": "string", "description": "Copyright Year" },
+        "volume": { "type": "string", "description": "Volume" },
+        "schoolName": { "type": "string", "description": "Name of School Book Delivered" },
+        "district": { "type": "string", "description": "District" },
+        "municipality": { "type": "string", "description": "Municipality" },
+        "dateAcquired": { "type": "string", "format": "date", "description": "Date Acquired/Delivered" },
+        "usable": { "type": "number", "description": "Total number of usable" },
+        "partiallyDamaged": { "type": "number", "description": "Total Number of partially damaged" },
+        "damaged": { "type": "number", "description": "Total number of damaged" },
+        "lost": { "type": "number", "description": "Total number of lost" },
+        "condemnable": { "type": "number", "description": "Total number of condemnable" },
+        "total": { "type": "number", "description": "TOTAL" },
+        "acquisitionMode": { "type": "string", "description": "Mode of Acquisition" },
+        "utilizationMode": { "type": "string", "description": "Mode of Utilization" },
+        "impactOnLearners": { "type": "string", "description": "Impact on performance of Learners" },
+        "userId": { "type": "string", "description": "ID of the user who added the record" },
+        "addedBy": { "type": "string", "description": "Name of the user who added the record" }
+      },
+      "required": [
+        "title", "type", "gradeLevel", "subject", "author", "schoolName", "district", "dateAcquired", 
+        "usable", "partiallyDamaged", "damaged", "lost", "condemnable", "total", "userId"
+      ]
+    }
+  },
+  "firestore": {
+    "/books/{bookId}": {
+      "schema": "Book",
+      "description": "Global book inventory"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles"
+    }
+  }
+}

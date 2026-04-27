@@ -1,6 +1,6 @@
 {
-  "name": "Inventory App",
-  "description": "A comprehensive inventory management system for learning resources, featuring book tracking, distribution reports.",
+  "name": "SDO Bohol - ADM Tracker",
+  "description": "Comprehensive tracking and registry system for Alternative Delivery Mode (ADM) students in SDO Bohol. Manages student data, academic status, and program assessments.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

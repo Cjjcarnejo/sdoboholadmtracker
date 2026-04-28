@@ -13,7 +13,8 @@ import {
   doc, 
   getDoc, 
   setDoc,
-  serverTimestamp 
+  serverTimestamp,
+  getDocFromServer
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { UserProfile, OperationType, FirestoreErrorInfo } from '../types';
@@ -46,6 +47,18 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 // Add isPlaceholder flag if needed for the app's logic
 if (db) db.isPlaceholder = false;
 if (auth) auth.isPlaceholder = false;
+
+async function testConnection() {
+  try {
+    // Attempt to read a non-existent document to test connectivity
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Cloud Firestore is unreachable. Please check your Firebase configuration and internet connection.");
+    }
+  }
+}
+testConnection();
 
 const googleProvider = new GoogleAuthProvider();
 

@@ -17,13 +17,14 @@
         "grade": { "type": "string" },
         "reasonForADM": { "type": "string" },
         "academicStatus": { "type": "string" },
+        "assessment": { "type": "string", "enum": ["Pending", "Continue ADM", "Back to Regular Class"] },
         "duration": { "type": "string" },
         "startDate": { "type": "string" },
         "endDate": { "type": "string" },
         "createdAt": { "type": "number" },
         "createdBy": { "type": "string" }
       },
-      "required": ["id", "district", "school", "studentName", "lastName", "firstName", "gender", "grade", "reasonForADM", "academicStatus", "duration", "startDate", "endDate", "createdAt", "createdBy"]
+      "required": ["id", "district", "school", "studentName", "lastName", "firstName", "gender", "grade", "reasonForADM", "academicStatus", "assessment", "duration", "startDate", "endDate", "createdAt", "createdBy"]
     },
     "UserProfile": {
       "title": "User Profile",

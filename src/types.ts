@@ -1,6 +1,6 @@
 export type Gender = 'Male' | 'Female';
-export type Grade = 'Grade 7' | 'Grade 8' | 'Grade 9' | 'Grade 10' | 'Grade 11' | 'Grade 12';
-export type ReasonForADM = 'Distance' | 'Work' | 'Health' | 'Family Problems' | 'Others';
+export type Grade = 'Kindergarten' | 'Grade 1' | 'Grade 2' | 'Grade 3' | 'Grade 4' | 'Grade 5' | 'Grade 6' | 'Grade 7' | 'Grade 8' | 'Grade 9' | 'Grade 10' | 'Grade 11' | 'Grade 12';
+export type ReasonForADM = 'Health Issues' | 'Conflict Affected' | 'Work Commitments' | 'Children in Need of Care and Protection' | 'Children in Conflict with the Law' | 'Child Deprived with Liberty' | 'Remote Areas' | 'Others';
 export type AcademicStatus = '(90-100) Outstanding' | '(85-89) Very Satisfactory' | '(80-84) Satisfactory' | '(75-79) Fairly Satisfactory' | '(Below 75) Did not meet expectations';
 export type Assessment = 'Pending' | 'Continue ADM' | 'Back to Regular Class';
 

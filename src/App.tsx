@@ -2,9 +2,9 @@ import React from 'react';
 import { LayoutDashboard, Users, GraduationCap, AlertCircle, Plus, Search, Filter, Trash2, X, ChevronDown, Calendar, School, MapPin, LogOut, Key, Mail, Lock, User as UserIcon, Building } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PieChart, Pie, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { StudentRecord, Gender, Grade, ReasonForADM, AcademicStatus, Assessment } from './types';
+import { StudentRecord, Gender, Grade, ReasonForADM, AcademicStatus, Assessment, OperationType } from './types';
 import { DISTRICTS, GRADES, REASONS, ACADEMIC_STATUSES, SCHOOLS_BY_DISTRICT, ASSESSMENTS, DISTRICTS_BY_CD } from './constants';
-import { auth, signInWithGoogle, logOut, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, createUserProfile, getUserProfile } from './lib/firebase';
+import { auth, signInWithGoogle, logOut, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, createUserProfile, getUserProfile, handleFirestoreError } from './lib/firebase';
 import { getADMAssessmentRecommendation } from './services/geminiService';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { collection, query, onSnapshot, addDoc, deleteDoc, doc, updateDoc, where, orderBy, serverTimestamp } from 'firebase/firestore';
@@ -170,10 +170,7 @@ export default function App() {
       setRecords(docs);
       setAuthError(''); // Clear any previous connectivity errors on success
     }, (error) => {
-      console.error("Firestore access denied or error:", error);
-      if (error.message.includes('offline')) {
-        setAuthError('The database is currently syncing or offline. Data will appear automatically once the connection is restored.');
-      }
+      handleFirestoreError(error, OperationType.LIST, 'students');
     });
 
     return () => unsubscribe();
@@ -194,8 +191,7 @@ export default function App() {
       }));
       setAppUsers(docs);
     }, (error) => {
-      console.error("Users listener permission denied:", error);
-      setAppUsers([]);
+      handleFirestoreError(error, OperationType.LIST, 'users');
     });
 
     return () => unsubscribe();
@@ -214,8 +210,7 @@ export default function App() {
       await addDoc(collection(db, 'students'), studentData);
       setIsFormOpen(false);
     } catch (error) {
-      console.error("Error adding student record:", error);
-      alert("Failed to save record. Please check permissions.");
+      handleFirestoreError(error, OperationType.CREATE, 'students');
     }
   };
 
@@ -228,8 +223,7 @@ export default function App() {
       });
       setEditingRecord(null);
     } catch (error) {
-      console.error("Error updating record:", error);
-      alert("Failed to update record. Check permissions.");
+      handleFirestoreError(error, OperationType.UPDATE, `students/${id}`);
     }
   };
 
@@ -239,8 +233,7 @@ export default function App() {
       try {
         await deleteDoc(doc(db, 'students', id));
       } catch (error) {
-        console.error("Error deleting record:", error);
-        alert("Failed to delete record.");
+        handleFirestoreError(error, OperationType.DELETE, `students/${id}`);
       }
     }
   };
@@ -361,7 +354,7 @@ export default function App() {
     ? SCHOOLS_BY_DISTRICT[filterDistrict] 
     : Array.from(new Set(records.map(r => r.school))).sort();
 
-  const operationalUsers = appUsers.filter(u => u.email !== 'carmonaloren042@gmail.com');
+  const operationalUsers = appUsers.filter(u => u.email !== 'cjjcarnejo@gmail.com');
   const totalStudents = records.length;
   const mostCommonReason = records.length > 0 
     ? records.reduce((acc, curr) => {
@@ -428,7 +421,7 @@ export default function App() {
                 Students
               </button>
 
-              {user?.email === 'carmonaloren042@gmail.com' && (
+              {user?.email === 'cjjcarnejo@gmail.com' && (
                 <>
                   <div className="mt-1">
                     <button 
@@ -555,7 +548,7 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-6">
-            {currentView === 'students' && userProfile?.role === 'admin' && user?.email !== 'carmonaloren042@gmail.com' && (
+            {currentView === 'students' && userProfile?.role === 'admin' && user?.email !== 'cjjcarnejo@gmail.com' && (
               <button 
                 onClick={() => setIsFormOpen(true)}
                 className="flex items-center gap-2 bg-deped-blue hover:bg-brand-900 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-deped-blue/20 active:scale-95"
@@ -923,7 +916,7 @@ export default function App() {
                         <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Academic Status</th>
                         <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assessment</th>
                         <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">ADM Duration</th>
-                        {user?.email === 'carmonaloren042@gmail.com' && (
+                        {user?.email === 'cjjcarnejo@gmail.com' && (
                           <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User</th>
                         )}
                         <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
@@ -1001,7 +994,7 @@ export default function App() {
                                   </p>
                                 </div>
                               </td>
-                              {user?.email === 'carmonaloren042@gmail.com' && (
+                              {user?.email === 'cjjcarnejo@gmail.com' && (
                                 <td className="px-8 py-4 whitespace-nowrap">
                                   <span className="text-[11px] font-bold text-slate-600">
                                     {appUsers.find((u: any) => u.uid === record.createdBy)?.fullName || 'System Admin'}
@@ -1028,7 +1021,7 @@ export default function App() {
                                         <Trash2 className="w-4.5 h-4.5" />
                                       </button>
                                     </>
-                                  ) : (userProfile?.role === 'admin' || user?.email === 'carmonaloren042@gmail.com') && (
+                                  ) : (userProfile?.role === 'admin' || user?.email === 'cjjcarnejo@gmail.com') && (
                                     <button 
                                       onClick={() => deleteRecord(record.id)}
                                       className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
@@ -1517,7 +1510,7 @@ function RecordForm({ onSubmit, onCancel, userProfile, initialData }: { onSubmit
                   disabled={isAiLoading}
                   className="text-[10px] font-bold text-deped-blue hover:text-brand-700 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded transition-colors disabled:opacity-50"
                 >
-                  {isAiLoading ? 'Analyzing...' : 'Get AI Recommendation ✨'}
+                  {isAiLoading ? 'Analyzing...' : ''}
                 </button>
               </div>
               <div className="relative">

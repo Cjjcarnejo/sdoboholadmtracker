@@ -13,8 +13,7 @@ service cloud.firestore {
 
     function isSystemAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == 'carmonaloren042@gmail.com' && 
-        request.auth.token.email_verified == true
+        request.auth.token.email.lower() == 'cjjcarnejo@gmail.com'
       );
     }
 
@@ -33,15 +32,15 @@ service cloud.firestore {
     // --- Entity Validations ---
 
     function isValidStudentRecord(data) {
-      return data.keys().hasAll(['studentName', 'lastName', 'firstName', 'district', 'school', 'gender', 'grade', 'reasonForADM', 'academicStatus', 'duration', 'startDate', 'endDate', 'createdAt', 'createdBy'])
+      return data.keys().hasAll(['studentName', 'lastName', 'firstName', 'district', 'school', 'gender', 'grade', 'reasonForADM', 'academicStatus', 'assessment', 'duration', 'startDate', 'endDate', 'createdAt', 'createdBy'])
         && data.studentName is string && data.studentName.size() <= 200
         && data.lastName is string && data.lastName.size() <= 100
         && data.firstName is string && data.firstName.size() <= 100
         && data.district is string && data.district.size() <= 100
         && data.school is string && data.school.size() <= 200
         && data.gender in ['Male', 'Female']
-        && data.grade in ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
-        && data.reasonForADM in ['Distance', 'Work', 'Health', 'Family Problems', 'Others']
+        && data.grade in ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
+        && data.reasonForADM in ['Health Issues', 'Conflict Affected', 'Work Commitments', 'Children in Need of Care and Protection', 'Children in Conflict with the Law', 'Child Deprived with Liberty', 'Remote Areas', 'Others']
         && data.academicStatus in ['(90-100) Outstanding', '(85-89) Very Satisfactory', '(80-84) Satisfactory', '(75-79) Fairly Satisfactory', '(Below 75) Did not meet expectations']
         && data.assessment in ['Pending', 'Continue ADM', 'Back to Regular Class']
         && data.duration is string

@@ -38,6 +38,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [filterDistrict, setFilterDistrict] = React.useState('');
   const [filterSchool, setFilterSchool] = React.useState('');
+  const [selectedCD, setSelectedCD] = React.useState<string>('');
   const [filterGender, setFilterGender] = React.useState('');
   const [filterGrade, setFilterGrade] = React.useState('');
   const [isDistrictNavOpen, setIsDistrictNavOpen] = React.useState(false);
@@ -344,15 +345,17 @@ export default function App() {
   const filteredRecords = records.filter(r => {
     const matchesSearch = r.studentName.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           r.school.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDistrict = filterDistrict === '' || r.district === filterDistrict;
+    const matchesDistrict = filterDistrict === '' 
+      ? (selectedCD === '' || DISTRICTS_BY_CD[selectedCD]?.some(d => d.toUpperCase() === r.district.toUpperCase()))
+      : r.district.toUpperCase() === filterDistrict.toUpperCase();
     const matchesSchool = filterSchool === '' || r.school === filterSchool;
     const matchesGender = filterGender === '' || r.gender === filterGender;
     return matchesSearch && matchesDistrict && matchesSchool && matchesGender;
   }).sort((a, b) => a.studentName.toLowerCase().localeCompare(b.studentName.toLowerCase()));
 
-  const availableSchoolsForFilter = filterDistrict && SCHOOLS_BY_DISTRICT[filterDistrict] 
-    ? SCHOOLS_BY_DISTRICT[filterDistrict] 
-    : Array.from(new Set(records.map(r => r.school))).sort();
+  const availableSchoolsForFilter = filterDistrict && SCHOOLS_BY_DISTRICT[filterDistrict.toUpperCase()] 
+    ? SCHOOLS_BY_DISTRICT[filterDistrict.toUpperCase()] 
+    : [];
 
   const operationalUsers = appUsers.filter(u => u.email !== 'cjjcarnejo@gmail.com');
   const totalStudents = records.length;
@@ -395,6 +398,7 @@ export default function App() {
                   setCurrentView('overview');
                   setFilterDistrict('');
                   setFilterSchool('');
+                  setSelectedCD('');
                   setFilterGender('');
                   setIsDistrictNavOpen(false);
                 }}
@@ -410,6 +414,7 @@ export default function App() {
                   setCurrentView('students');
                   setFilterDistrict('');
                   setFilterSchool('');
+                  setSelectedCD('');
                   setFilterGender('');
                   setIsDistrictNavOpen(false);
                 }}
@@ -427,7 +432,7 @@ export default function App() {
                     <button 
                       onClick={() => setIsDistrictNavOpen(!isDistrictNavOpen)}
                       className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                        filterDistrict || isDistrictNavOpen ? 'bg-white/10 text-white' : 'text-brand-100/70 hover:text-white hover:bg-white/5'
+                        selectedCD || isDistrictNavOpen ? 'bg-white/10 text-white' : 'text-brand-100/70 hover:text-white hover:bg-white/5'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -445,23 +450,24 @@ export default function App() {
                           exit={{ height: 0, opacity: 0 }}
                           className="overflow-hidden bg-black/20 rounded-lg mt-1"
                         >
-                          <div className="p-2 space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
-                            {DISTRICTS.map((d) => (
+                          <div className="p-2 space-y-1">
+                            {['CD1', 'CD2', 'CD3'].map((cd) => (
                               <button
-                                key={d}
+                                key={cd}
                                 onClick={() => {
-                                  setFilterDistrict(d);
+                                  setSelectedCD(cd);
+                                  setFilterDistrict('');
                                   setFilterSchool('');
                                   setCurrentView('students');
                                 }}
-                                className={`w-full text-left px-3 py-1.5 rounded-md text-[10px] font-bold transition-all transition-all flex items-center gap-2 ${
-                                  filterDistrict === d 
+                                className={`w-full text-left px-3 py-1.5 rounded-md text-[10px] font-bold transition-all flex items-center gap-2 ${
+                                  selectedCD === cd 
                                     ? 'bg-deped-yellow text-brand-950 shadow-md' 
                                     : 'text-brand-100/50 hover:text-white hover:bg-white/5'
                                 }`}
                               >
-                                <div className={`w-1.5 h-1.5 rounded-full ${filterDistrict === d ? 'bg-brand-950' : 'bg-brand-100/20'}`} />
-                                <span className="truncate">{d}</span>
+                                <div className={`w-1.5 h-1.5 rounded-full ${selectedCD === cd ? 'bg-brand-950' : 'bg-brand-100/20'}`} />
+                                <span className="truncate">{cd}</span>
                               </button>
                             ))}
                           </div>
@@ -475,6 +481,7 @@ export default function App() {
                       setCurrentView('registered-users');
                       setFilterDistrict('');
                       setFilterSchool('');
+                      setSelectedCD('');
                       setFilterGender('');
                       setIsDistrictNavOpen(false);
                     }}
@@ -872,7 +879,7 @@ export default function App() {
                         }}
                       >
                         <option value="">All Districts</option>
-                        {DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+                        {(selectedCD ? DISTRICTS_BY_CD[selectedCD] : DISTRICTS).map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
                       <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     </div>
@@ -880,9 +887,10 @@ export default function App() {
                     <div className="relative">
                       <School className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                       <select 
-                        className="pl-8 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-deped-blue/20 focus:border-deped-blue outline-none appearance-none cursor-pointer max-w-[150px]"
+                        className="pl-8 pr-10 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-deped-blue/20 focus:border-deped-blue outline-none appearance-none cursor-pointer max-w-[150px] disabled:opacity-50 disabled:cursor-not-allowed"
                         value={filterSchool}
                         onChange={(e) => setFilterSchool(e.target.value)}
+                        disabled={!filterDistrict}
                       >
                         <option value="">All Schools</option>
                         {availableSchoolsForFilter.map(s => <option key={s} value={s}>{s}</option>)}
@@ -1349,7 +1357,7 @@ function SignupForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: 
             disabled={!formData.district}
           >
             <option value=""></option>
-            {formData.district && SCHOOLS_BY_DISTRICT[formData.district]?.map(s => (
+            {formData.district && SCHOOLS_BY_DISTRICT[formData.district.toUpperCase()]?.map(s => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
@@ -1577,7 +1585,7 @@ function RecordForm({ onSubmit, onCancel, userProfile, initialData }: { onSubmit
                   onChange={e => setFormData({ ...formData, school: e.target.value })}
                 >
                   <option value=""></option>
-                  {formData.district && SCHOOLS_BY_DISTRICT[formData.district]?.map(s => (
+                  {formData.district && SCHOOLS_BY_DISTRICT[formData.district.toUpperCase()]?.map(s => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>

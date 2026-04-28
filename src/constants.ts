@@ -1,7 +1,3 @@
-export const DISTRICTS = [
-  'ALBURQUERQUE', 'ALICIA', 'ANDA', 'ANTEQUERA', 'BACLAYON', 'BALILIHAN', 'BATUAN', 'BIEN UNIDO', 'BILAR', 'BUENAVISTA', 'CALAPE', 'CANDIJAY', 'CARMEN 1', 'CARMEN 2', 'CATIGBIAN', 'CLARIN', 'CORELLA', 'CORTES', 'DAGOHOY', 'DANAO', 'DAUIS', 'DIMIAO', 'DUERO', 'GARCIA HERNANDEZ', 'GETAFE', 'GUINDULMAN', 'INABANGA NORTH', 'INABANGA SOUTH', 'JAGNA', 'LINTAON', 'LILA', 'LOAY', 'LOBOC', 'LOON NORTH', 'LOON SOUTH', 'MABINI', 'MARIBOJOC', 'PANGLAO', 'PILAR', 'PRES. CARLOS P. GARCIA', 'SAGBAYAN', 'SAN ISIDRO', 'SAN MIGUEL', 'SEVILLA', 'SIERRA BULLONES', 'SIKATUNA', 'TALIBON 1', 'TALIBON 2', 'TRINIDAD', 'TUBIGON EAST', 'TUBIGON WEST', 'UBAY 1', 'UBAY 2', 'UBAY 3', 'VALENCIA'
-];
-
 export const GRADES = [
   'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'
 ];
@@ -25,10 +21,12 @@ export const ASSESSMENTS = [
 ];
 
 export const DISTRICTS_BY_CD: Record<string, string[]> = {
-  'CD1': ['ALBURQUERQUE', 'ANTEQUERA', 'BACLAYON', 'BALILIHAN', 'CALAPE', 'CATIGBIAN', 'CORELLA', 'CORTES', 'DAUIS', 'LOON NORTH', 'LOON SOUTH', 'MARIBOJOC', 'PANGLAO', 'SIKATUNA', 'TUBIGON-EAST', 'TUBIGON-WEST'],
-  'CD2': ['BIEN UNIDO', 'BUENAVISTA I', 'BUENAVISTA II', 'CLARIN', 'DAGOHOY', 'DANAO', 'GETAFE I', 'GETAFE II', 'INABANGA NORTH', 'INABANGA SOUTH', 'PRES CPG', 'SAGBAYAN', 'SAN ISIDRO', 'SAN MIGUEL', 'TALIBON I', 'TALIBON II', 'TRINIDAD I', 'TRINIDAD II', 'UBAY I', 'UBAY II', 'UBAY III'],
-  'CD3': ['ALICIA', 'ANDA', 'BATUAN', 'BILAR', 'CANDIJAY', 'CARMEN I', 'CARMEN II', 'CARMEN III', 'DIMIAO', 'DUERO', 'GARCIA HERNANDEZ', 'GUINDULMAN', 'JAGNA', 'LILA', 'LOAY', 'LOBOC', 'MABINI', 'PILAR', 'SEVILLA', 'SIERRA BULLONES', 'VALENCIA']
+  'CD1': ['Alburquerque', 'Antequera', 'Baclayon', 'Balilihan', 'Calape', 'Catigbian', 'Corella', 'Cortes', 'Dauis', 'Loon North', 'Loon South', 'Maribojoc', 'Panglao', 'Sikatuna', 'Tubigon East', 'Tubigon West'],
+  'CD2': ['Bien Unido', 'Buenavista I', 'Buenavista II', 'Clarin', 'Dagohoy', 'Danao', 'Getafe I', 'Getafe II', 'Inabanga North', 'Inabanga South', 'Pres. CPG', 'Sagbayan', 'San Isidro', 'San Miguel', 'Talibon I', 'Talibon II', 'Trinidad I', 'Trinidad II', 'UBAY I', 'UBAY II', 'UBAY III'],
+  'CD3': ['Alicia', 'Anda', 'Batuan', 'Bilar', 'Candijay', 'Carmen I', 'Carmen II', 'Carmen III', 'Dimiao', 'Duero', 'Garcia Hernandez', 'Guindulman', 'Jagna', 'Lila', 'Loay', 'Loboc', 'Mabini', 'Pilar', 'Sevilla', 'Sierra Bullones', 'Valencia']
 };
+
+export const DISTRICTS = Object.values(DISTRICTS_BY_CD).flat().sort();
 
 export const SCHOOLS_BY_DISTRICT: Record<string, string[]> = {
   'ALBURQUERQUE': ['Alburquerque CES', 'Bahi PS', 'Canlimpong PS', 'Cantiguib ES', 'Dangay ES', 'Tagbuane ES', 'Toril ES', 'Erico B. Aumentado HS', 'San Roque NHS'],

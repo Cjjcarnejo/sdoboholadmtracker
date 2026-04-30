@@ -74,7 +74,7 @@ export default function App() {
   // Auth Listener
   React.useEffect(() => {
     // Check if Firebase is actually initialized
-    if (!auth || auth.isPlaceholder) {
+    if (!auth || (auth as any).isPlaceholder) {
       setAuthError('Firebase initialization failed (Invalid API Keys). Please ensure the project is properly configured via the setup tool.');
       setIsLoading(false);
       return;
@@ -122,7 +122,7 @@ export default function App() {
   }, [showSignup]);
 
   const handleGoogleSignIn = async () => {
-    if (!auth || auth.isPlaceholder) {
+    if (!auth || (auth as any).isPlaceholder) {
       setAuthError('Authentication service is not available (Setup Required).');
       return;
     }
@@ -145,7 +145,7 @@ export default function App() {
 
   // Data Listener
   React.useEffect(() => {
-    if (!user || !userProfile || !db || db.isPlaceholder) {
+    if (!user || !userProfile || !db || (db as any).isPlaceholder) {
       setRecords([]);
       return;
     }

@@ -20,8 +20,11 @@ import firebaseConfig from '../../firebase-applet-config.json';
 import { UserProfile, OperationType, FirestoreErrorInfo } from '../types';
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId) as any; 
-export const auth = getAuth(app) as any;
+const databaseId = (firebaseConfig as any).firestoreDatabaseId;
+export const db = (databaseId && databaseId !== '(default)') 
+  ? getFirestore(app, databaseId) 
+  : getFirestore(app);
+export const auth = getAuth(app);
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const errInfo: FirestoreErrorInfo = {
@@ -45,8 +48,8 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 }
 
 // Add isPlaceholder flag if needed for the app's logic
-if (db) db.isPlaceholder = false;
-if (auth) auth.isPlaceholder = false;
+if (db) (db as any).isPlaceholder = false;
+if (auth) (auth as any).isPlaceholder = false;
 
 async function testConnection() {
   try {
